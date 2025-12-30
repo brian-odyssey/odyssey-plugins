@@ -1,0 +1,42 @@
+{
+  "name": "verbalized-sampling-plugin",
+  "version": "1.0.0",
+  "description": "Claude Code plugin for Verbalized Sampling - enhance LLM diversity with probability-weighted option generation",
+  "author": "Brian Lopez",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/resmark/verbalized-sampling"
+  },
+  "keywords": [
+    "claude-code",
+    "plugin",
+    "verbalized-sampling",
+    "diversity",
+    "brainstorming",
+    "exploration",
+    "llm",
+    "mcp"
+  ],
+  "scripts": {
+    "build": "cd mcp-server && npm run build",
+    "test": "cd mcp-server && npm test",
+    "test:coverage": "cd mcp-server && npm test -- --coverage",
+    "lint": "cd mcp-server && npm run lint",
+    "clean": "cd mcp-server && npm run clean",
+    "prepare": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    ".claude-plugin/",
+    "commands/",
+    "hooks/",
+    "skills/",
+    "mcp-server/dist/",
+    "mcp-server/package.json",
+    "docs/",
+    "README.md"
+  ]
+}

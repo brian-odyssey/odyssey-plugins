@@ -1,0 +1,17 @@
+{
+  "name": "thinking-tools",
+  "version": "1.0.0",
+  "description": "Structured reasoning and sequential thinking skills for complex problem-solving, planning, and analysis",
+  "author": {
+    "name": "Brian Lopez"
+  },
+  "license": "MIT",
+  "keywords": [
+    "thinking",
+    "reasoning",
+    "sequential",
+    "analysis",
+    "problem-solving",
+    "planning"
+  ]
+}
