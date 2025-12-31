@@ -32,6 +32,18 @@
       },
       "license": "MIT",
       "category": "utilities"
+    },
+    {
+      "name": "learning-mode",
+      "source": "./.claude/plugins/learning-mode",
+      "strict": false,
+      "description": "Educational interaction modes that help developers learn instead of just getting answers. Includes /teach, /pair, /review, /hints, and /quiz commands plus CLAUDE.md templates for enforcing learning-first behavior.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Brian Lopez"
+      },
+      "license": "MIT",
+      "category": "education"
     }
   ]
 }
