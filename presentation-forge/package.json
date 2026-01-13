@@ -1,0 +1,36 @@
+{
+  "name": "presentation-forge",
+  "version": "1.0.0",
+  "description": "AI-powered Slidev presentation creation, validation, and refinement",
+  "author": "Brian Lopez",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "slidev": "slidev",
+    "slidev:dev": "slidev --open",
+    "slidev:build": "slidev build",
+    "slidev:export": "slidev export",
+    "validate": "node validators/slide-crawler.js",
+    "validate:overflow": "node validators/overflow-check.js",
+    "validate:a11y": "node validators/accessibility-check.js",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "@slidev/cli": "^0.49.0",
+    "@slidev/theme-default": "^0.25.0",
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {
+    "mermaid": "^10.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "slidev",
+    "presentation",
+    "claude-code",
+    "skill",
+    "ai-workflow"
+  ]
+}
