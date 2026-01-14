@@ -1,9 +1,16 @@
 name: presentation-forge
-version: 1.0.0
+version: 1.1.0
 description: |
   AI-powered presentation creation, validation, and refinement workflow.
   Generates Slidev markdown presentations with automated overflow detection,
   accessibility checking, and iterative refinement based on feedback.
+
+  v1.1.0 Security Update (2026-01-13):
+  - P0: URL injection prevention in slide-crawler.js
+  - P0: Slide count integrity validation
+  - P1: Server availability check before validation
+  - P1: Resource limits (timeout, max slides)
+  - P1: Static markdown validation (CI/CD compatible)
 
 author: Brian Lopez
 license: MIT
@@ -47,6 +54,33 @@ templates:
   - name: technical-deep-dive
     file: templates/technical-deep-dive.md
     description: Technical audience with code blocks and diagrams
+  - name: hybrid-stakeholder-technical
+    file: templates/hybrid-stakeholder-technical.md
+    description: |
+      Multi-stakeholder hybrid template combining:
+      - Part 1: Executive Overview (leadership decisions)
+      - Part 2: Technical Deep Dive (engineering details)
+      - Part 3: Operations (DevOps/SRE concerns)
+      Use for presentations with mixed audiences.
+  - name: workshop-interactive
+    file: templates/workshop-interactive.md
+    description: |
+      Interactive workshop template with:
+      - Timed activities and breakout sessions
+      - Hands-on exercises with success criteria
+      - Group work and presentations
+      - Facilitator notes and debrief sections
+      Use for training sessions, hackathons, and skill-building workshops.
+  - name: product-demo
+    file: templates/product-demo.md
+    description: |
+      Product demonstration template with:
+      - Problem/solution framing
+      - Before/after comparisons
+      - Live demo script sections
+      - Customer success stories
+      - Pricing and call-to-action slides
+      Use for sales demos, investor pitches, and product launches.
 
 # Validators run during VALIDATE phase
 validators:
@@ -55,16 +89,24 @@ validators:
     description: Playwright-based DOM overflow detection
   - name: slide-crawler
     file: validators/slide-crawler.js
-    description: Systematic slide-by-slide analysis
+    description: Systematic slide-by-slide analysis (with URL security + resource limits)
   - name: accessibility-check
     file: validators/accessibility-check.js
     description: WCAG contrast and aria validation
+  - name: slide-count-check
+    file: validators/validate-slide-count.js
+    description: P0 - Validates YAML outline matches generated markdown slide count
+  - name: static-validation
+    file: validators/validate-static.js
+    description: P1 - CI/CD-compatible markdown validation without Slidev server
 
 # Dependencies (version-locked per Gemini recommendation)
 dependencies:
   runtime:
     - "@slidev/cli@^0.49.0"
     - "playwright@^1.40.0"
+    - "js-yaml@^4.1.0"
+    - "node-fetch@^3.3.0"
   optional:
     - "mermaid@^10.0.0"
     - "@slidev/theme-default@latest"
@@ -75,7 +117,12 @@ config:
   defaultTheme: default
   slidevPort: 3030
   validationTimeout: 30000
-  maxSlidesPerDeck: 30
+  maxSlidesPerDeck: 60
+  operationTimeoutMs: 120000
+  allowedHosts:
+    - localhost
+    - 127.0.0.1
+    - 0.0.0.0
 
 # Entry points for Claude Code
 commands:

@@ -1,7 +1,7 @@
 {
   "name": "presentation-forge",
-  "version": "1.0.0",
-  "description": "AI-powered Slidev presentation creation, validation, and refinement",
+  "version": "1.1.0",
+  "description": "AI-powered Slidev presentation creation, validation, and refinement. v1.1.0 includes security fixes (URL injection prevention, resource limits) and static validation.",
   "author": "Brian Lopez",
   "license": "MIT",
   "private": true,
@@ -13,12 +13,17 @@
     "validate": "node validators/slide-crawler.js",
     "validate:overflow": "node validators/overflow-check.js",
     "validate:a11y": "node validators/accessibility-check.js",
-    "test": "node --test tests/"
+    "validate:static": "node validators/validate-static.js",
+    "validate:count": "node validators/validate-slide-count.js",
+    "test": "node --test tests/",
+    "test:security": "node --test tests/security.test.js"
   },
   "dependencies": {
     "@slidev/cli": "^0.49.0",
     "@slidev/theme-default": "^0.25.0",
-    "playwright": "^1.40.0"
+    "playwright": "^1.40.0",
+    "js-yaml": "^4.1.0",
+    "node-fetch": "^3.3.0"
   },
   "devDependencies": {
     "mermaid": "^10.6.0"
@@ -31,6 +36,7 @@
     "presentation",
     "claude-code",
     "skill",
-    "ai-workflow"
+    "ai-workflow",
+    "security"
   ]
 }

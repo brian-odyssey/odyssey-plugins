@@ -151,15 +151,20 @@ async function checkOverflow() {
       if (overflowData.hasOverflow) {
         console.log(' ⚠️  OVERFLOW DETECTED');
 
-        // Capture screenshot
+        // Capture screenshot (with error handling)
         const screenshotPath = path.join(outputDir, `slide-${slideNum}-overflow.png`);
-        await page.screenshot({ path: screenshotPath, fullPage: true });
+        try {
+          await page.screenshot({ path: screenshotPath, fullPage: true });
+          results.screenshots.push(screenshotPath);
+        } catch (screenshotErr) {
+          console.warn(`\n      ⚠️  Could not save screenshot: ${screenshotErr.message}`);
+          results.screenshots.push(`FAILED: ${screenshotPath}`);
+        }
 
         results.overflowSlides.push({
           slide: slideNum,
           details: overflowData.overflowDetails
         });
-        results.screenshots.push(screenshotPath);
       } else {
         console.log(' ✅');
       }
@@ -198,6 +203,11 @@ async function checkOverflow() {
   console.log(`\nReport saved: ${reportPath}`);
 
   // Exit with appropriate code
+  // CRITICAL: Check execution errors FIRST (fixes silent failure bug)
+  if (results.errors && results.errors.length > 0) {
+    console.error(`\n❌ Validation failed: ${results.errors.length} execution error(s)`);
+    process.exit(2);  // Distinct code for execution failures
+  }
   process.exit(results.overflowSlides.length > 0 ? 1 : 0);
 }
 

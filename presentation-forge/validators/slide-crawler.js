@@ -18,13 +18,55 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
+// Security: Allowed hosts for URL validation (P0 fix from adversarial review)
+const ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0'];
+const MAX_SLIDES = 200;
+const OPERATION_TIMEOUT_MS = 120000; // 2 minutes max
+
 // Parse command line arguments
 const args = process.argv.slice(2);
 const urlIndex = args.indexOf('--url');
 const outputIndex = args.indexOf('--output');
 
-const baseUrl = urlIndex !== -1 ? args[urlIndex + 1] : 'http://localhost:3030';
+const rawUrl = urlIndex !== -1 ? args[urlIndex + 1] : 'http://localhost:3030';
 const outputDir = outputIndex !== -1 ? args[outputIndex + 1] : './analysis';
+
+// P0 Fix C1: URL Injection Prevention
+function validateUrl(urlString) {
+  try {
+    const url = new URL(urlString);
+    if (!ALLOWED_HOSTS.includes(url.hostname)) {
+      throw new Error(`Security: Untrusted host "${url.hostname}". Allowed: ${ALLOWED_HOSTS.join(', ')}`);
+    }
+    return url.toString();
+  } catch (e) {
+    if (e.message.includes('Security:')) throw e;
+    throw new Error(`Invalid URL: ${urlString}`);
+  }
+}
+
+// P0 Fix M1: Server Availability Check
+async function checkServerAvailable(url) {
+  try {
+    const { default: fetch } = await import('node-fetch');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}`);
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      throw new Error(`Slidev server not responding at ${url} (timeout after 5s)`);
+    }
+    throw new Error(`Slidev server not available at ${url}. Start with: npm run dev\nError: ${e.message}`);
+  }
+}
+
+const baseUrl = validateUrl(rawUrl);
 
 // Ensure output directory exists
 if (!fs.existsSync(outputDir)) {
@@ -48,6 +90,12 @@ async function crawlSlides() {
   console.log(`   URL: ${baseUrl}`);
   console.log(`   Output: ${outputDir}`);
 
+  // P0 Fix M1: Check server availability before starting
+  console.log('   Checking server availability...');
+  await checkServerAvailable(baseUrl);
+  console.log('   ✅ Server is responding\n');
+
+  const operationStart = Date.now();
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
     viewport: { width: 1920, height: 1080 }
@@ -85,12 +133,22 @@ async function crawlSlides() {
     });
 
     results.totalSlides = totalSlides;
+
+    // P0 Fix M3: Resource limits
+    if (totalSlides > MAX_SLIDES) {
+      throw new Error(`Slide count ${totalSlides} exceeds maximum ${MAX_SLIDES}. Possible malformed presentation.`);
+    }
+
     console.log(`📊 Analyzing ${totalSlides} slides...\n`);
 
     let totalWords = 0;
 
     // Analyze each slide
     for (let slideNum = 1; slideNum <= totalSlides; slideNum++) {
+      // P0 Fix M3: Timeout check
+      if (Date.now() - operationStart > OPERATION_TIMEOUT_MS) {
+        throw new Error(`Operation timeout after ${OPERATION_TIMEOUT_MS / 1000}s. Analyzed ${slideNum - 1}/${totalSlides} slides.`);
+      }
       process.stdout.write(`   Slide ${slideNum}/${totalSlides}...`);
 
       await page.goto(`${baseUrl}/${slideNum}`, { waitUntil: 'networkidle' });

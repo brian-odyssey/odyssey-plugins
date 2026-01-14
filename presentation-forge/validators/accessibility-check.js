@@ -284,6 +284,13 @@ async function checkAccessibility() {
   fs.writeFileSync(reportPath, JSON.stringify(results, null, 2));
   console.log(`\nReport saved: ${reportPath}`);
 
+  // Exit with appropriate code
+  // CRITICAL: Check execution errors FIRST (fixes silent failure bug)
+  if (results.errors && results.errors.length > 0) {
+    console.error(`\n❌ Validation failed: ${results.errors.length} execution error(s)`);
+    process.exit(2);  // Distinct code for execution failures
+  }
+
   // Exit code based on errors (not warnings)
   const errorCount = results.issues.filter(i => i.severity === 'error').length;
   process.exit(errorCount > 0 ? 1 : 0);

@@ -1,0 +1,17 @@
+{
+  "name": "presentation-forge",
+  "version": "1.1.0",
+  "description": "AI-powered presentation creation for Slidev. 5-phase workflow: structure, generate, validate, refine, finalize.",
+  "author": {
+    "name": "Brian Lopez",
+    "email": "brian@resmark.systems"
+  },
+  "license": "MIT",
+  "keywords": [
+    "presentations",
+    "slidev",
+    "slides",
+    "powerpoint",
+    "mermaid"
+  ]
+}
