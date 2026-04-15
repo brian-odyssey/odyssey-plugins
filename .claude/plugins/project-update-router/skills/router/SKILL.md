@@ -70,17 +70,23 @@ Use `AskUserQuestion` with `multiSelect: true` for audience (can be `partner + s
 
 The skill runs as a numbered phase machine. Phases 2.5 / 4.5 / 6.5 are insertions from the Fulcrum pilot — skip them and you re-hit a near-miss.
 
-### Phase 0 — Detect project
+### Phase 0 — Detect project + load extensions
 
 Resolve `cwd`, git remote, `.beads/*.db` prefix. Propose project slug; confirm with user. Multi-repo projects: multi-select repos.
+
+**Then load extension config.** Scan `cwd` (and, for multi-repo projects, each selected repo) for `.claude/plugins/*-update/config/`. If found, read `audiences.yaml`, `brand.yaml`, and `routing-overrides.yaml`. Extension's `project.slug` overrides the auto-detected slug (e.g., `brian-odyssey-fulcrum-fitness` beats inferred `fulcrum-fitness`). See **Extension Consumer Protocol** below for field-by-field semantics.
 
 ### Phase 1 — Collect 4 routing inputs
 
 Ask via `AskUserQuestion`. Default distribution to `link-shareable` for `partner`/`client` audiences; `archival` for `self`/`internal`; `attach-to-email` for `investor`.
 
+**If extension loaded,** extension's `default_distribution_by_audience` overrides these defaults. When the user names a human ("update for Adam"), resolve via extension's `people.<key>.audience` map rather than asking — but always confirm the resolved audience back before proceeding.
+
 ### Phase 2 — Resolve route
 
-Match against the routing table below. **First match wins.** If no row matches, fall back to `long-form-doc` and append a row to `~/.gstack/projects/<project-slug>/project-update-router/decisions-log.md` (user-state, append-only per-project log — NOT the plugin's immutable seed at `references/decisions-log-seed.md`) with `{timestamp, inputs, fallback_taken}`. Print the matched row + reasoning to the user before proceeding.
+**Extension overrides checked first.** If extension's `routing-overrides.yaml` has a matching row, use it and skip the shared table. First-match semantics still apply within the override list. Otherwise, fall through to the shared routing table below.
+
+Match against the routing table below. **First match wins.** If no row matches, fall back to `long-form-doc` and append a row to `~/.gstack/projects/<project-slug>/project-update-router/decisions-log.md` (user-state, append-only per-project log — NOT the plugin's immutable seed at `references/decisions-log-seed.md`) with `{timestamp, inputs, fallback_taken, extension_loaded}`. Print the matched row + reasoning to the user before proceeding (include whether match came from extension overrides or shared table).
 
 ### Phase 2.5 — Audience-relative reframing (from pilot)
 
@@ -94,10 +100,10 @@ This is a comprehension check, NOT a privacy check.
 
 ### Phase 3 — Auto-pull, sensitivity-filtered and literacy-filtered
 
-Run auto-pull commands scoped to the project. Before content lands in the scaffold, run two filters:
+Run auto-pull commands scoped to the project per the **Auto-pull Protocol** below. Before content lands in the scaffold, run two filters:
 
 - **Sensitivity (P8):** If `sensitivity ∈ {public, password}`, exclude beads/learnings without `share:external` marker. Default assumption is internal — err toward excluding.
-- **Audience-literacy (P13):** Run sources through a token filter that flags likely internal shorthand (project code names, prior-project names, internal tool names, team jargon). Surface flagged tokens to user for rewrite or removal. Fulcrum pilot near-miss: `Mentat`, `voice-agent` — don't ship these to a partner.
+- **Audience-literacy (P13):** Run sources through a token filter that flags likely internal shorthand (project code names, prior-project names, internal tool names, team jargon). **Extension-aware:** if extension loaded, use `audiences.yaml` → `blocklist_tokens_for_audience[<audience>]` as the seed blocklist (project-specific jargon like `Mentat`, `voice-agent`, `entity intelligence`). Augment — don't replace — with any tokens the filter surfaces. Surface flagged tokens to user for rewrite or removal.
 
 Each surviving claim gets a **provenance badge** (bead ID, commit SHA, or learning key) that persists into the review surface.
 
@@ -374,6 +380,146 @@ sensitivity: private-local
 
 **No deploy, no Phase 6.5.** Phase 4.5 runs as markdown lint only.
 
+## Extension Consumer Protocol (v0.2.0)
+
+Project repos may ship a thin sibling plugin at `<repo>/.claude/plugins/<project>-update/` that layers project-specific audiences, brand, and distribution defaults onto this shared router. The router discovers, loads, and consumes extensions as follows.
+
+### Discovery
+
+In Phase 0, after resolving `cwd` + selected repos:
+
+```
+for repo in [cwd, *additional_repos]:
+  for dir in glob(f"{repo}/.claude/plugins/*-update/"):
+    if (dir / ".claude-plugin/plugin.json").exists():
+      load_extension(dir)
+```
+
+Extension is valid when `plugin.json` has `keywords` containing `extends:project-update-router` (stringly-typed contract — upgrade to a formal `requires` field when Claude Code plugin system adds one). If multiple extensions match (unusual — only one `*-update/` dir per repo expected), prefer the one whose `name` matches the repo's git remote slug.
+
+### Config schema
+
+Three YAMLs under `<extension>/config/`. All fields optional; router uses what's present, falls through to defaults for missing.
+
+**`audiences.yaml`** (consumed in Phase 0, 1, 3):
+
+| Path | Type | Used by |
+|------|------|---------|
+| `project.slug` | string | Phase 0 — overrides auto-detected slug (becomes `<project-slug>` in state paths) |
+| `project.beads_prefix` | string | Phase 3 — scopes `bd list`/`bd show` to `<prefix>-*` |
+| `project.git_repo` | string | Phase 3 — scopes `git log` |
+| `project.repo_path` | path | Phase 3 — cwd for git commands |
+| `people.<key>.audience` | enum | Phase 1 — resolves named humans to audience enum |
+| `people.<key>.handoff.*` | object | Phase 7 — handoff line template + channel |
+| `people.<key>.context_notes` | list | Phase 2.5 — audience-reframing hints |
+| `default_distribution_by_audience` | map | Phase 1 — overrides shared defaults |
+
+**`brand.yaml`** (consumed in Phase 5 generators, v0.3+; Phase 2.5 tone hints today):
+
+| Path | Type | Used by |
+|------|------|---------|
+| `identity.product_name`, `tagline`, `feel` | strings | Phase 5 — generator headline/copy |
+| `voice.tone`, `avoid`, `emphasize` | lists | Phase 2.5 — tone reframing |
+| `typography.*` | object | Phase 5 — generator CSS (v0.3+) |
+| `color_dark.*`, `color_light.*` | color maps | Phase 5 — generator CSS (v0.3+) |
+| `cta_style.*` | object | Phase 5 — CTA styling (v0.3+) |
+| `layout.*` | object | Phase 5 — grid + radius tokens (v0.3+) |
+| `deploy.*` | object | Phase 6 — route + production URL + local port; Phase 6.5 — `protection.automation_bypass_env` |
+| `anti_slop` | list | Phase 4.5 — lint rules (v0.3+) |
+| `status_color_semantics` | map | Pattern A — foundation-vs-new-work color mapping |
+
+**`routing-overrides.yaml`** (consumed in Phase 2):
+
+| Path | Type | Used by |
+|------|------|---------|
+| `overrides[].id` | string | Log in `decisions-log.md` when match |
+| `overrides[].match.{audience,distribution,content_shape}` | list | Phase 2 — match logic (all three must match; list values = "any of") |
+| `overrides[].format` | string | Phase 2 — resolved format |
+| `overrides[].generator` | string | Phase 5 — generator selector |
+| `overrides[].deploy.*` | object | Phase 5/6 — generator-specific deploy config |
+| `overrides[].handoff_template` | string | Phase 7 — handoff line |
+| `pattern_defaults.*` | object | Patterns A/B/C/D/E — per-project defaults (enable, labels, style) |
+
+### Load order
+
+1. Shared router defaults (hardcoded in SKILL.md)
+2. Extension config (overlays on top — override not merge for scalars; merge-by-key for maps)
+3. User responses at invocation (highest priority)
+
+Extension absence is never an error — router falls back to shared defaults + asks the user for everything audience-map would have resolved.
+
+### Extension staleness warning
+
+Brand tokens duplicated from the project's `DESIGN.md` (if present) are a known drift source. If `brand.yaml` references a `design_doc` path, the router should (v0.3+) diff the two and warn — not block. v0.2.0 only reads; no drift detection yet.
+
+## Auto-pull Protocol (v0.2.0)
+
+Phase 3 auto-pull runs four sources, all scoped by extension's `project.*` fields when an extension is loaded. Each source is optional: missing data → `(no data)` placeholder, never a hard fail.
+
+### Source 1 — Beads
+
+```bash
+# scope: prefix from extension audiences.yaml → project.beads_prefix (or inferred)
+cd <project.repo_path>   # beads DB lives in the repo
+bd list --status=in_progress --json --limit 200 \
+  | jq -r '.[] | select(.id | startswith("<prefix>-"))'
+bd list --status=open --json --limit 100 \
+  | jq -r '.[] | select(.id | startswith("<prefix>-"))'
+# for each in_progress: bd show <id> --json → capture notes + design fields
+```
+
+Output: list of `{id, status, title, notes_summary, updated_at}`. Pipe to the "What's next" / "Real build ahead" (Pattern A) sections.
+
+### Source 2 — Git log
+
+```bash
+# scope: repo_path from extension or selected repo
+cd <project.repo_path>
+# window: since last update (from ~/.gstack/projects/<slug>/project-update-router/last-updates.jsonl)
+# fallback: 14 days if no last-updates entry for this audience
+git log --since="<window>" --pretty=format:"%h %ad %s%n%b" --date=short
+# also: count LOC churn for "shipped" vs "scaffolding" classification (heuristic)
+git log --since="<window>" --numstat --pretty=format:"%H"
+```
+
+Output: list of `{sha, date, subject, body, churn}`. Feeds "What shipped — foundation" (Pattern A, emerald) — but **assume overstate**: Pattern A's whole job is the counterweight to `git log ≈ shipped features`.
+
+### Source 3 — gstack learnings
+
+```bash
+# Verify CLI at runtime — may be gstack-learn or gstack-learnings-search.
+gstack-learn --search --project=<project.slug> --limit 20 2>/dev/null \
+  || rg -l "<project.slug>" ~/.gstack/projects/*/learnings.jsonl
+```
+
+Output: list of `{key, observation, tags, date}`. Feeds "Decisions / lessons" + Pattern B premises-vs-open split.
+
+### Source 4 — gstack design docs
+
+```bash
+# Latest APPROVED design doc for this project — highest-signal single source
+ls -1t ~/.gstack/projects/<project.slug>/brianlopez-*-design-*.md 2>/dev/null | head -3
+# Read most recent; grep for "Status:" to find APPROVED; grep for "Supersedes:" for chain.
+```
+
+Output: 1–3 most-recent design docs. Feeds thesis prose + premises + open-decisions lists. Supersedes chains feed Phase 4 conflict surfacing.
+
+### Filters (both run on every source before any content lands)
+
+1. **Sensitivity (P8)** — see Phase 3.
+2. **Audience-literacy (P13)** — see Phase 3. Seeded from extension's `audiences.yaml → blocklist_tokens_for_audience[<audience>]`.
+
+### Provenance badges
+
+Every surviving claim carries a provenance badge (Pattern-A-style inline pill or Pattern-B-style source tag):
+
+- Bead: `[<beads_prefix>-<id>]` — styled with extension's `pattern_defaults.provenance_badges.style` if set
+- Git: `[<sha-7>]`
+- Learning: `[learn:<key>]`
+- Design doc: `[design-<date>]`
+
+Badges persist through the review surface (Phase 5) so the human can suppress a source if it's wrong.
+
 ## Files & State
 
 ### Plugin (read-only, ships with the install)
@@ -405,9 +551,11 @@ odyssey-plugins/.claude/plugins/project-update-router/
 
 ### Per-project extension (optional, sibling plugins)
 
-Projects with recurring update cadences (fulcrum-fitness, resmark-workspace, intension-pilates, odyssey-mercantile) may ship a thin sibling plugin at `<project-repo>/.claude/plugins/<project>-update/` that layers project-specific audiences, brand, and distribution defaults onto this shared router. Tracked separately — see upstream docs.
+Projects with recurring update cadences (fulcrum-fitness, resmark-workspace, intension-pilates, odyssey-mercantile) may ship a thin sibling plugin at `<project-repo>/.claude/plugins/<project>-update/` that layers project-specific audiences, brand, and distribution defaults onto this shared router. See **Extension Consumer Protocol** (above) for the full schema and load order. Router discovers + loads automatically when cwd is a project repo with an extension installed.
 
-Generator scripts (microsite, long-form) are invoked via existing skills — this skill doesn't reimplement them. v0.1.0 runs interpreter-mode (manual workflow execution); v0.2+ ships automated generators.
+First instance: `fulcrum-update` v0.1.0 at `<fulcrum-fitness>/.claude/plugins/fulcrum-update/` (shipped 2026-04-15). Bead `workshop-3ra` tracks replication to Resmark, InTension, Odyssey.
+
+Generator scripts (microsite, long-form) are invoked via existing skills — this skill doesn't reimplement them. v0.1.0 ran pure interpreter-mode; v0.2.0 adds the Extension Consumer + Auto-pull protocols (still interpreter-executed but now formally scoped); v0.3+ ships automated generators.
 
 ## Success Criteria
 

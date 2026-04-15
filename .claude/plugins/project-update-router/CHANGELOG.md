@@ -4,6 +4,38 @@ All notable changes to `project-update-router` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows [SemVer](https://semver.org/).
 
+## [0.2.0] — 2026-04-15
+
+**Extension Consumer Protocol + Auto-pull Protocol** — still interpreter-mode, but now formally scoped. First consumer of the per-project extension plugin pattern (first instance: `fulcrum-update` shipped same day in `fulcrum-fitness`).
+
+### Added
+
+- **Extension Consumer Protocol section** in SKILL.md: discovery (scan `cwd` for `.claude/plugins/*-update/config/`), validation (keyword `extends:project-update-router`), config schema (field-by-field: which phase consumes which path in `audiences.yaml` / `brand.yaml` / `routing-overrides.yaml`), load order (shared defaults → extension → user response).
+- **Auto-pull Protocol section** in SKILL.md: 4 sources (beads, git log, gstack learnings, gstack design docs) with scoping rules keyed off extension's `project.{slug, beads_prefix, git_repo, repo_path}` fields. Missing extension → fall back to auto-detection + user prompts.
+- **Phase 0 update**: extension discovery step appended after project detection.
+- **Phase 1 update**: named-human audience resolution via extension `people.<key>.audience` map; `default_distribution_by_audience` overrides shared defaults.
+- **Phase 2 update**: extension `routing-overrides.yaml` checked before shared routing table, first-match semantics preserved within overrides.
+- **Phase 3 update**: literacy blocklist seeded from extension `blocklist_tokens_for_audience[<audience>]`.
+
+### Changed
+
+- Version bump `0.1.0 → 0.2.0`.
+- `plugin.json` description reflects new protocols.
+
+### Not yet (unchanged)
+
+- Automated microsite generator (now v0.3+, was v0.2)
+- Automated long-form generator (v0.3+)
+- `$D serve`-style review UI (v0.4)
+- SVG diagram template files (v0.3+)
+- Pre-publish validation hooks (v0.3+)
+- Deploy-protection-aware verification helper (v0.3+)
+- Brand-token drift detection between `brand.yaml` and project's `DESIGN.md` (v0.3+)
+
+### Context
+
+v0.2.0 closes the risk flagged in the 2026-04-15 Fulcrum self-retro: *"router v0.2+ must actually consume extension configs or they become orphaned docs."* The Extension Consumer Protocol is the formal contract that `fulcrum-update` (and its future Resmark / InTension / Odyssey siblings) can rely on. Interpreter-mode means Claude executes the protocols directly from SKILL.md — no compiled code yet, but the contract is specified with enough precision that v0.3 generators can implement against it.
+
 ## [0.1.0] — 2026-04-15
 
 Initial release. **Interpreter-mode** — skill guides Claude through the workflow manually; automated generators land in v0.2+.
