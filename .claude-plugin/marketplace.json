@@ -44,6 +44,18 @@
       },
       "license": "MIT",
       "category": "design"
+    },
+    {
+      "name": "project-update-router",
+      "source": "./.claude/plugins/project-update-router",
+      "strict": false,
+      "description": "Routes project-update authoring (partner syncs, client status, architecture walkthroughs, strategic-pivot notes, retrospectives, investor updates) to the right artifact format — interactive microsite, long-form doc, Slidev, dashboard, hybrid PPTX — based on audience + distribution + content-shape + sensitivity. Scaffolds content from beads + git log + gstack learnings. Replaces PPTX-for-everything muscle memory with format choice that matches message. v0.1.0 interpreter-mode; automated generators land in v0.2+. Per-project extensions expected via sibling plugins in project repos.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Brian Lopez"
+      },
+      "license": "MIT",
+      "category": "productivity"
     }
   ]
 }

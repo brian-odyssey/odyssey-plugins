@@ -1,0 +1,21 @@
+{
+  "name": "project-update-router",
+  "version": "0.1.0",
+  "description": "Routes project update authoring to the right format (interactive microsite, long-form doc, Slidev, dashboard, hybrid PPTX) based on audience + distribution + content-shape + sensitivity. Scaffolds content from beads + git log + gstack learnings. Replaces the default PPTX-for-everything muscle memory with format choice that matches message. v0.1.0 ships interpreter-mode: SKILL.md guides Claude through the workflow manually; automated generators land in v0.2+. Per-project context extensions expected to land alongside via sibling plugins in project repos.",
+  "author": {
+    "name": "Brian Lopez",
+    "email": "brian@odysseymercantile.com"
+  },
+  "repository": "https://github.com/brian-odyssey/odyssey-plugins",
+  "license": "MIT",
+  "keywords": [
+    "project-update",
+    "partner-sync",
+    "status-report",
+    "format-routing",
+    "microsite",
+    "strategic-pivot",
+    "retrospective",
+    "client-communication"
+  ]
+}
