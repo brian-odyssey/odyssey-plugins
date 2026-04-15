@@ -32,6 +32,18 @@
       },
       "license": "MIT",
       "category": "education"
+    },
+    {
+      "name": "ux-patterns",
+      "source": "./.claude/plugins/ux-patterns",
+      "strict": false,
+      "description": "Domain UX pattern skills for Claude Code. Vertical-specific UX conventions that generic design reviewers structurally cannot catch. Fitness vertical v1 covers 12 patterns (class booking, schedule grids, capacity signals, waitlists, instructor affinity, kiosk check-in, intro-offer funnels, package credits, multi-location, mobile-first, pricing tiers, recurring membership). Cited by design-review skills to surface domain-specific anti-patterns with named citations and measurable checks.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Brian Lopez"
+      },
+      "license": "MIT",
+      "category": "design"
     }
   ]
 }

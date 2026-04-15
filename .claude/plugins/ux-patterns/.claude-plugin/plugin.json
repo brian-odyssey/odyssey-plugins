@@ -1,0 +1,21 @@
+{
+  "name": "ux-patterns",
+  "version": "0.1.0",
+  "description": "Domain UX pattern skills for Claude Code. Encodes vertical-specific UX conventions (fitness v1; hospitality / legal / SaaS planned) that generic design reviewers structurally cannot catch. Cited by /gstack-design-review to surface domain-specific anti-patterns, and during UI generation to bake conventions in from the start.",
+  "author": {
+    "name": "Brian Lopez",
+    "email": "brian@odysseymercantile.com"
+  },
+  "repository": "https://github.com/brian-odyssey/odyssey-plugins",
+  "license": "MIT",
+  "keywords": [
+    "ux",
+    "design-review",
+    "design-patterns",
+    "fitness",
+    "pilates",
+    "booking",
+    "schedule",
+    "vertical-ux"
+  ]
+}
