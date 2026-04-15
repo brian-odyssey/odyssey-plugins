@@ -10,18 +10,6 @@
   },
   "plugins": [
     {
-      "name": "vs",
-      "source": "./.claude/plugins/verbalized-sampling",
-      "strict": false,
-      "description": "Enhance LLM diversity with probability-weighted option generation using Verbalized Sampling techniques",
-      "version": "1.1.1",
-      "author": {
-        "name": "Brian Lopez"
-      },
-      "license": "MIT",
-      "category": "utilities"
-    },
-    {
       "name": "thinking-tools",
       "source": "./.claude/plugins/thinking-tools",
       "strict": false,
