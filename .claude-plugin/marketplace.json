@@ -49,8 +49,8 @@
       "name": "project-update-router",
       "source": "./.claude/plugins/project-update-router",
       "strict": false,
-      "description": "Routes project-update authoring (partner syncs, client status, architecture walkthroughs, strategic-pivot notes, retrospectives, investor updates) to the right artifact format — interactive microsite, long-form doc, Slidev, dashboard, hybrid PPTX — based on audience + distribution + content-shape + sensitivity. Scaffolds content from beads + git log + gstack learnings. Replaces PPTX-for-everything muscle memory with format choice that matches message. v0.2.0 adds Extension Consumer Protocol (consumes `.claude/plugins/*-update/` sibling plugins) + formalized Auto-pull Protocol. Still interpreter-mode; automated generators land in v0.3+.",
-      "version": "0.2.0",
+      "description": "Routes project-update authoring (partner syncs, client status, architecture walkthroughs, strategic-pivot notes, retrospectives, investor updates) to the right artifact format — interactive microsite, long-form doc, Slidev, dashboard, hybrid PPTX — based on audience + distribution + content-shape + sensitivity. Scaffolds content from beads + git log + gstack learnings + project-local `.claude/project-update.yaml`. v0.3.0: singular plugin installable anywhere, reads each project's state contextually via five probes (identity, audiences, brand, deploy-infra, past-updates); reverts v0.2.0 Extension Consumer Protocol. Ships a Pattern Library with two observed patterns plus an advisory validator.",
+      "version": "0.3.0",
       "author": {
         "name": "Brian Lopez"
       },
